@@ -40,12 +40,12 @@ def db():
 
 
 def naplnit_sklad(c):
-    c.executemany(
-        "INSERT INTO produkty (nazov, cena, kategoria, kusy) VALUES (%s, %s, %s, %s) "
-        "ON CONFLICT (nazov) DO NOTHING",
-        SKLAD_POVODNY,
-    )
-
+    with c.cursor() as cur:
+        cur.executemany(
+            "INSERT INTO produkty (nazov, cena, kategoria, kusy) VALUES (%s, %s, %s, %s) "
+            "ON CONFLICT (nazov) DO NOTHING",
+            SKLAD_POVODNY,
+        )
 
 def init_db():
     with db() as c:
