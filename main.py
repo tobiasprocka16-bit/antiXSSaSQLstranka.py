@@ -188,14 +188,14 @@ def vypis_kosika(c):
 # --------------------------------------------------------------------- stránky
 @app.get("/")
 def index():
-    return FileResponse(BASE / "shop.js")
+    return FileResponse(BASE / "index.html")
 
 
 @app.get("/admin")
 def admin(request: Request):
     if not request.session.get("admin"):
         return RedirectResponse("/", status_code=303)
-    return FileResponse(BASE / "admin.js")
+    return FileResponse(BASE / "index.admin.html")
 
 
 # ------------------------------------------------------------------ verejné API
