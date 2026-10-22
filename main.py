@@ -107,7 +107,7 @@ async def bezpecnostne_hlavicky(request: Request, call_next):
     return r
 
 
-app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
+
 
 
 # ----------------------------------------------------------------- modely
