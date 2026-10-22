@@ -2,12 +2,119 @@
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Obchod</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        card, .card { border: 1px solid #ccc; padding: 1rem; border-radius: 8px; background: #fafafa; }
+        button { cursor: pointer; padding: 0.5rem 1rem; background: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+        .kosik-sekcia { background: #f0f4f8; padding: 1rem; border-radius: 8px; margin-top: 2rem; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 10px 20px; border-radius: 4px; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .toast.show { opacity: 1; }
+        .toast.err { background: #dc3545; }
+    </style>
 </head>
 <body>
-    <h1>Obchod</h1>
-    <div id="produkty"></div>
-    <script src="/static/shop.js" defer></script>
+    <h1>Obchod 🛒</h1>
+    <p><a href="/admin">Prejsť do administrácie</a></p>
+
+    <h2>Produkty</h2>
+    <div id="produkty" class="grid">Načítavam produkty...</div>
+
+    <div class="kosik-sekcia">
+        <h2>Košík</h2>
+        <div id="kosik-obsah">Košík je prázdny.</div>
+        <p><strong>Celková cena: <span id="celkova-cena">0.00</span> €</strong></p>
+        <button onclick="pouziZlavu()">Použiť 10% zľavu</button>
+        <button onclick="vymazKosik()" style="background: #dc3545;">Vyprázdniť košík</button>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const EMOJI = { ovocie: "🍎", zelenina: "🥕", sladkosti: "🍫" };
+
+        function toast(msg, err = false) {
+            const t = document.getElementById("toast");
+            t.textContent = msg;
+            t.className = "toast show" + (err ? " err" : "");
+            setTimeout(() => t.className = "toast", 2500);
+        }
+
+        async function nactiSklad() {
+            const res = await fetch("/api/sklad");
+            const produkty = await res.json();
+            const div = document.getElementById("produkty");
+            div.innerHTML = "";
+            produkty.forEach(p => {
+                const em = EMOJI[p.kategoria] || "📦";
+                const el = document.createElement("div");
+                el.className = "card";
+                el.innerHTML = `
+                    <h3>${em} ${p.nazov}</h3>
+                    <p>Kategória: ${p.kategoria}</p>
+                    <p>Cena: <strong>${p.cena.toFixed(2)} €</strong></p>
+                    <p>Na sklade: ${p.kusy} ks</p>
+                    <button onclick="pridajDoKosika('${p.nazov}')" ${p.kusy <= 0 ? 'disabled style="background:#ccc"' : ''}>Kúpiť</button>
+                `;
+                div.appendChild(el);
+            });
+        }
+
+        async function nactiKosik() {
+            const res = await fetch("/api/kosik");
+            const data = await res.json();
+            
+            const obsah = document.getElementById("kosik-obsah");
+            if (data.polozky.length === 0) {
+                obsah.innerHTML = "<p>Košík je prázdny.</p>";
+            } else {
+                let html = "<ul>";
+                data.polozky.forEach(item => {
+                    html += `<li>${item.nazov} - ${item.pocet} ks x ${item.cena.toFixed(2)} €</li>`;
+                });
+                html += "</ul>";
+                if (data.zlava) html += "<p><em>Bula aplikovaná 10% zľava!</em></p>";
+                obsah.innerHTML = html;
+            }
+            document.getElementById("celkova-cena").textContent = data.celkova_cena.toFixed(2);
+        }
+
+        async function pridajDoKosika(nazov) {
+            const res = await fetch(`/api/kosik/${nazov}`, { method: "POST" });
+            const data = await res.json();
+            if (!res.ok) {
+                toast(data.detail || "Chyba", true);
+            } else {
+                toast(data.sprava);
+                nactiSklad();
+                nactiKosik();
+            }
+        }
+
+        async function pouziZlavu() {
+            const res = await fetch("/api/zlava", { method: "POST" });
+            const data = await res.json();
+            if (!res.ok) {
+                toast(data.detail || "Chyba", true);
+            } else {
+                toast(data.sprava);
+                nactiKosik();
+            }
+        }
+
+        async function vymazKosik() {
+            const res = await fetch("/api/vymaz-kosik", { method: "POST" });
+            const data = await res.json();
+            toast(data.sprava);
+            nactiSklad();
+            nactiKosik();
+        }
+
+        nactiSklad();
+        nactiKosik();
+    </script>
 </body>
 </html>
