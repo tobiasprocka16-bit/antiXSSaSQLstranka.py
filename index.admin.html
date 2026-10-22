@@ -2,12 +2,117 @@
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Obchod</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Obchod</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+        .hidden { display: none; }
+        input, button { padding: 0.5rem; margin: 0.3rem 0; font-size: 1rem; }
+        button { cursor: pointer; background: #28a745; color: white; border: none; border-radius: 4px; }
+        button.danger { background: #dc3545; }
+        .box { border: 1px solid #ddd; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; background: #f9f9f9; }
+        .toast { margin-top: 1rem; padding: 10px; background: #e2e3e5; border-radius: 4px; }
+    </style>
 </head>
 <body>
-    <h1>Obchod</h1>
-    <div id="produkty"></div>
-    <script src="/static/admin.js" defer></script>
+    <h1>Administrácia obchodu 🔐</h1>
+    <p><a href="/">← Späť do obchodu</a></p>
+
+    <!-- Prihlasovacia sekcia -->
+    <div id="login-box" class="box">
+        <h3>Prihlásenie</h3>
+        <input type="password" id="heslo" placeholder="Admin heslo">
+        <br>
+        <button onclick="login()">Prihlásiť sa</button>
+    </div>
+
+    <!-- Admin panel (skrytý kým nie je prihlásený) -->
+    <div id="admin-panel" class="box hidden">
+        <h3>Správa skladu</h3>
+        <div id="admin-produkty">Načítavam sklad...</div>
+        
+        <hr style="margin: 1.5rem 0;">
+        <button class="danger" onclick="resetObchodu()">Resetovať celý obchod</button>
+        <br>
+        <button onclick="logout()" style="background: #6c757d; margin-top: 1rem;">Odhlásiť sa</button>
+    </div>
+
+    <div id="msg" class="toast"></div>
+
+    <script>
+        function showMsg(text) {
+            document.getElementById("msg").textContent = text;
+        }
+
+        async function login() {
+            const heslo = document.getElementById("heslo").value;
+            const res = await fetch("/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ heslo })
+            });
+            if (res.ok) {
+                document.getElementById("login-box").classList.add("hidden");
+                document.getElementById("admin-panel").classList.remove("hidden");
+                showMsg("Úspešne prihlásený.");
+                nactiAdminSklad();
+            } else {
+                const err = await res.json();
+                showMsg("Chyba: " + (err.detail || "Nepodarilo sa prihlásiť"));
+            }
+        }
+
+        async function logout() {
+            await fetch("/api/logout", { method: "POST" });
+            document.getElementById("admin-panel").classList.add("hidden");
+            document.getElementById("login-box").classList.remove("hidden");
+            showMsg("Odhlásený.");
+        }
+
+        async function nactiAdminSklad() {
+            const res = await fetch("/api/sklad");
+            const produkty = await res.json();
+            const div = document.getElementById("admin-produkty");
+            div.innerHTML = "";
+            produkty.forEach(p => {
+                const row = document.createElement("div");
+                row.style.margin = "0.5rem 0";
+                row.innerHTML = `
+                    <b>${p.nazov}</b> (Sklad: <span id="kusy-${p.nazov}">${p.kusy}</span> ks) 
+                    <input type="number" id="add-${p.nazov}" value="10" min="1" style="width: 70px;">
+                    <button onclick="pridajKusy('${p.nazov}')">Pridať kusy</button>
+                `;
+                div.appendChild(row);
+            });
+        }
+
+        async function pridajKusy(nazov) {
+            const pocet = parseInt(document.getElementById(`add-${nazov}`).value);
+            const res = await fetch(`/api/sklad/${nazov}/pridaj`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pocet })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                document.getElementById(`kusy-${nazov}`).textContent = data.kusy;
+                showMsg(data.sprava);
+            } else {
+                showMsg("Chyba: " + data.detail);
+            }
+        }
+
+        async function resetObchodu() {
+            if (!confirm("Naozaj chcete resetovať celý obchod?")) return;
+            const res = await fetch("/api/reset", { method: "POST" });
+            const data = await res.json();
+            if (res.ok) {
+                showMsg(data.sprava);
+                nactiAdminSklad();
+            } else {
+                showMsg("Chyba pri resete.");
+            }
+        }
+    </script>
 </body>
 </html>
