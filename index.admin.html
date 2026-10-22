@@ -1,70 +1,13 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="sk">
 <head>
-<meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'self'">
-<meta name="referrer" content="no-referrer">
-<meta name="robots" content="noindex, nofollow">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Správa skladu</title>
-<style>
-  :root {
-    --bg: #f6f7f9; --card: #fff; --text: #1d2330; --muted: #6b7385;
-    --accent: #2f7d4f; --accent-d: #256640; --danger: #c0392b; --border: #e3e6ec;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #14171d; --card: #1d2129; --text: #e8eaf0; --muted: #98a0b3; --border: #2b303b; }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
-  header { background: var(--card); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
-  header h1 { margin: 0; font-size: 1.25rem; }
-  header a { color: var(--muted); text-decoration: none; font-size: .9rem; }
-  header a:hover { color: var(--text); }
-  main { max-width: 800px; margin: 0 auto; padding: 20px; }
-  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); }
-  tr:last-child td { border-bottom: 0; }
-  th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
-  td.name { font-weight: 600; text-transform: capitalize; }
-  .low { color: var(--danger); font-weight: 600; }
-  .add { display: flex; gap: 6px; }
-  input { font: inherit; width: 90px; padding: 7px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
-  button { font: inherit; cursor: pointer; border: 0; border-radius: 8px; padding: 7px 12px; background: var(--accent); color: #fff; }
-  button:hover { background: var(--accent-d); }
-  button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-  button.ghost:hover { background: var(--bg); color: var(--text); }
-  .bar { margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px; }
-  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); background: #222; color: #fff; padding: 10px 16px; border-radius: 8px; opacity: 0; transition: .25s; pointer-events: none; max-width: 90vw; }
-  #toast.show { opacity: 1; transform: translateX(-50%); }
-  #toast.err { background: var(--danger); }
-  @media (max-width: 600px) { th:nth-child(2), td:nth-child(2) { display: none; } }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Obchod</title>
 </head>
 <body>
-<header>
-  <h1>📦 Správa skladu</h1>
-  <a href="/">← Späť do obchodu</a>
-</header>
-
-<main>
-  <div class="panel">
-    <table>
-      <thead>
-        <tr><th>Položka</th><th>Kategória</th><th>Cena</th><th>Na sklade</th><th>Pridať kusy</th></tr>
-      </thead>
-      <tbody id="telo"></tbody>
-    </table>
-  </div>
-  <div class="bar">
-    <button id="btnReset" type="button" class="ghost">Resetovať obchod</button>
-    <button id="btnLogout" type="button" class="ghost">Odhlásiť</button>
-  </div>
-</main>
-
-<div id="toast"></div>
-
-<script src="/static/admin.js" defer></script>
+    <h1>Obchod</h1>
+    <div id="produkty"></div>
+    <script src="/static/admin.js" defer></script>
 </body>
 </html>
