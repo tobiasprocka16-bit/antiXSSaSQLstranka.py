@@ -192,11 +192,8 @@ def index():
 
 
 @app.get("/admin")
-def admin(request: Request):
-    if not request.session.get("admin"):
-        return RedirectResponse("/", status_code=303)
+def admin():
     return FileResponse(BASE / "index.admin.html")
-
 
 # ------------------------------------------------------------------ verejné API
 @app.get("/api/sklad")
