@@ -1,3 +1,5 @@
+# 1. Importy knižníc a modulov
+
 import os
 import secrets
 import time
@@ -15,23 +17,23 @@ from starlette.middleware.sessions import SessionMiddleware
 
 BASE = Path(__file__).parent
 
-# ---- Konfigurácia z Environment Variables (na Renderi: Environment) ----
+# 2. Konfigurácia z Environment Variables (na Renderi: Environment)
 DATABASE_URL = os.environ["DATABASE_URL"]          # Internal Database URL z Render Postgresu
 SESSION_SECRET = os.environ["SESSION_SECRET"]      # dlhý náhodný reťazec
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "1") == "1"   # lokálne nastav COOKIE_SECURE=0
 
-# názov, cena, kategória, kusy
+# 3. Začiatok databaze 
 SKLAD_POVODNY = [
-    ("jablko", Decimal("1.00"), "ovocie", 2),
-    ("ananas", Decimal("1.30"), "ovocie", 500),
-    ("mrkva", Decimal("0.20"), "zelenina", 800),
-    ("kitkat", Decimal("0.80"), "sladkosti", 300),
-    ("kinder", Decimal("1.50"), "sladkosti", 400),
+    ("mrkva", Decimal("0.20"), "zelenina", 800),   # 0.20 €
+    ("kitkat", Decimal("0.80"), "sladkosti", 300),  # 0.80 €
+    ("jablko", Decimal("1.00"), "ovocie", 2),       # 1.00 €
+    ("ananas", Decimal("1.30"), "ovocie", 500),     # 1.30 €
+    ("kinder", Decimal("1.50"), "sladkosti", 400),  # 1.50 €
 ]
 
 
-# ------------------------------------------------------------------ databáza
+# 4. Správa Databázy
 @contextmanager
 def db():
     # commit pri úspechu, rollback pri výnimke, spojenie sa vždy zatvorí
@@ -80,7 +82,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-# ---------------------------------------------------------------- aplikácia
+# 5. Inicilizácia FastApi a Middleware
 # docs/openapi vypnuté, aby sa verejne nevypisovali admin endpointy
 app = FastAPI(title="Obchod", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
@@ -110,7 +112,7 @@ async def bezpecnostne_hlavicky(request: Request, call_next):
 
 
 
-# ----------------------------------------------------------------- modely
+# 6. Modely
 class PridanieKusov(BaseModel):
     pocet: int = Field(gt=0, le=100_000)
 
@@ -119,7 +121,7 @@ class Prihlasenie(BaseModel):
     heslo: str = Field(min_length=1, max_length=128)
 
 
-# ------------------------------------------------------------ autentifikácia
+# 7. Autentifikácia
 def require_admin(request: Request):
     if not request.session.get("admin"):
         raise HTTPException(status_code=401, detail="Nie si prihlásený")
@@ -158,7 +160,7 @@ def logout(request: Request):
     return {"sprava": "Odhlásený"}
 
 
-# -------------------------------------------------------------------- pomocné
+# 8. Pomocné Funkcie
 def vypis_kosika(c):
     rows = c.execute(
         """SELECT p.nazov, p.cena, p.kategoria, p.kusy AS na_sklade, k.pocet
@@ -185,7 +187,7 @@ def vypis_kosika(c):
     }
 
 
-# --------------------------------------------------------------------- stránky
+# 9. Routy pre HTML stránky (frontend)
 @app.get("/")
 def index():
     return FileResponse(BASE / "index.html")
@@ -195,7 +197,7 @@ def index():
 def admin():
     return FileResponse(BASE / "index.admin.html")
 
-# ------------------------------------------------------------------ verejné API
+# 10. Verejné api endpointy
 @app.get("/api/sklad")
 def get_sklad():
     with db() as c:
@@ -263,7 +265,7 @@ def vymaz_kosik():
         return {"sprava": "Košík bol vyprázdnený.", **vypis_kosika(c)}
 
 
-# ------------------------------------------------------------------ admin API
+# 11. Admin API endpointy
 @app.post("/api/sklad/{polozka}/pridaj", dependencies=[Depends(require_admin)])
 def pridaj_kusy(polozka: str, data: PridanieKusov):
     polozka = polozka.lower().strip()
